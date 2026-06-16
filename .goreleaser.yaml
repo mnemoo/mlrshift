@@ -1,0 +1,122 @@
+version: 2
+
+project_name: mlrshift
+
+before:
+  hooks:
+    # Harmless: the module has zero third-party dependencies, so this is a no-op
+    # that keeps go.mod tidy. There is intentionally no go.sum.
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: mlrshift
+    main: .
+    binary: mlrshift
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/mnemoo/mlrshift/internal/cli.Version={{ .Version }}
+      - -X github.com/mnemoo/mlrshift/internal/cli.Commit={{ .Commit }}
+      - -X github.com/mnemoo/mlrshift/internal/cli.Date={{ .Date }}
+    goos:
+      - windows
+      - linux
+      - darwin
+      - freebsd
+    goarch:
+      - amd64
+      - "386"
+      - arm64
+      - arm
+    goarm:
+      - "6"
+    ignore:
+      # windows: only amd64, 386, arm64 (no arm)
+      - goos: windows
+        goarch: arm
+      # darwin: only amd64, arm64 (no 386, no arm)
+      - goos: darwin
+        goarch: "386"
+      - goos: darwin
+        goarch: arm
+      # freebsd: only amd64 (no 386, no arm64, no arm)
+      - goos: freebsd
+        goarch: "386"
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm
+
+archives:
+  - id: mlrshift
+    ids:
+      - mlrshift
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      # Included only if present — allow_missing keeps releases working before
+      # these files are added to the repo.
+      - src: README.md
+        default_mode: 0644
+        allow_missing: true
+      - src: LICENSE
+        default_mode: 0644
+        allow_missing: true
+      - src: CHANGELOG.md
+        default_mode: 0644
+        allow_missing: true
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: git
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+      - "^refactor:"
+      - "^build:"
+      - "merge conflict"
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+
+release:
+  github:
+    owner: mnemoo
+    name: mlrshift
+  draft: false
+  footer: >-
+    ---
+
+    For MacOS: remove the quarantine flag `xattr -d com.apple.quarantine /path/to/file` if you cannot open the app

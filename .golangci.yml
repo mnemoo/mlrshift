@@ -1,0 +1,35 @@
+# golangci-lint configuration (schema v2).
+# A sensible, not-overly-strict set that passes on the current code.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+  settings:
+    misspell:
+      locale: US
+    errcheck:
+      # Fire-and-forget patterns used idiomatically throughout the code:
+      # writes to in-memory/CLI output streams, deferred Close on read-only
+      # files, and best-effort cleanup. Not worth wrapping each call.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*os.File).Close
+        - os.Remove
+        - os.Chdir
+        - os.WriteFile
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

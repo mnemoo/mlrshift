@@ -1,0 +1,19 @@
+# Build output
+/dist/
+
+# Built binaries
+/mlrshift
+mlrshift.exe
+
+# Coverage and test artifacts
+*.out
+coverage*
+
+# Temp files
+*.tmp
+.mlrshift-*.tmp
+
+# OS cruft
+.DS_Store
+
+testdata/golden
